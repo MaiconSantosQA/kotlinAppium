@@ -1,0 +1,93 @@
+stages:
+  - build
+  - test
+
+variables:
+  X_REQUESTER_TOKEN:
+    value: $X_REQUESTER_TOKEN
+    description: Token generated on requester-token-issuer.ifoodcorp.com.br
+  TEST_TAGS:
+    value: $TEST_TAGS
+    description: Tag expression for tests to be executed "https://junit.org/junit5/docs/current/user-guide/#running-tests-tags"
+
+.secrets_variables:
+  variables:
+    VAULT_SERVER_URL: URL
+    VAULT_AUTH_ROLE: 'role-jwt'
+    VAULT_AUTH_PATH: teste
+  secrets:
+    BROWSERSTACK_USERNAME:
+      vault:
+        engine:
+          name: kv-v2
+          path: gitlab
+        path: /production/ketchupUi/app
+        field: BROWSERSTACK_USERNAME
+    BROWSERSTACK_ACCESS_KEY:
+      vault:
+        engine:
+          name: kv-v2
+          path: gitlab
+        path: production/ketchupUi/app
+        field: BROWSERSTACK_ACCESS_KEY
+    CLIENT_ID:
+      vault:
+        engine:
+          name: kv-v2
+          path: gitlab
+        path: production/ketchupUi/app
+        field: CLIENT_ID
+    PASSWORD_DRIVER_TEST:
+      vault:
+        engine:
+          name: kv-v2
+          path: gitlab
+        path: production/ketchupUi/app
+        field: PASSWORD_DRIVER_TEST
+
+
+  before_script:
+    - export BROWSERSTACK_USERNAME=$(cat $BROWSERSTACK_USERNAME) >> .env
+    - export BROWSERSTACK_ACCESS_KEY=$(cat $BROWSERSTACK_ACCESS_KEY) >> .env
+    - export DRIVER_PASSWORD_TEST=$(cat $PASSWORD_DRIVER_TEST) >> .env
+    - echo -e "\nX_REQUESTER_TOKEN=$X_REQUESTER_TOKEN" >> .env
+    - cat .env
+
+build:
+  when: manual
+  extends:
+    - .secrets_variables
+  stage: build
+  image: gradle:latest
+  before_script:
+    - 'if [ -z "$X_REQUESTER_TOKEN" ]; then echo "X_REQUESTER_TOKEN is required"; exit 1; fi'
+  script:
+    - gradle build -x test
+
+tagged-test:
+  stage: test
+  when: manual
+  extends:
+    - .secrets_variables
+  image: gradle:latest
+  script:
+    - echo -e "\nNAME_BUILD=$TEST_TAGS $(date +"%Y-%m-%d %H:%M:%S")" >> .env
+    - gradle test -PincludeTags="$TEST_TAGS"
+
+route-tests:
+  stage: test
+  when: manual
+  extends:
+    - .secrets_variables
+  image: gradle:latest
+  script:
+    - echo -e "\nNAME_BUILD=Routes $(date +"%Y-%m-%d %H:%M:%S")" >> .env
+    - gradle test --tests RoutesTest
+
+login-tests:
+  stage: test
+  when: manual
+  extends:
+    - tagged-test
+  variables:
+    TEST_TAGS: login

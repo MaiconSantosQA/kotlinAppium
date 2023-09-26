@@ -1,0 +1,8 @@
+[*.{kt,kts}]
+ktlint.imports=true
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+max_imports_in_line = 1
+exclude = src/test/kotlin/*

@@ -1,0 +1,28 @@
+# Arquivos gerados pelo compilador Kotlin
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# Diretórios gerados pelo compilador Kotlin
+bin/
+out/
+build/
+
+# Arquivos de configuração
+.idea/
+local.properties
+
+# Arquivos de cache
+.gradle/
+.DS_Store
+
+# Arquivos temporários
+*.tmp
+*.log
+*.bak
+*.swp
+*.apk
+
+#env
+.env
+.env.example
